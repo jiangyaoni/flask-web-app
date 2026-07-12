@@ -53,13 +53,19 @@ class User(db.Model):
 app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
 
 # 为 Session 创建 Redis 连接（保持 decode_responses=False）
-session_redis = redis.Redis(
-    host='localhost',
-    port=6379,
-    db=1,
-    decode_responses=False,
-    protocol=2
-)
+redis_url = os.environ.get('REDIS_URL')
+if redis_url:
+    # 线上环境：从环境变量读取 Redis 地址
+    session_redis = redis.Redis.from_url(redis_url, decode_responses=False)
+else:
+    # 本地开发：继续使用 localhost
+    session_redis = redis.Redis(
+        host='localhost',
+        port=6379,
+        db=1,
+        decode_responses=False,
+        protocol=2
+    )
 
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_REDIS'] = session_redis
@@ -70,13 +76,18 @@ app.config['SESSION_KEY_PREFIX'] = 'session:'
 Session(app)
 
 # ==================== 4. 业务 Redis 连接 (db=0) ====================
-r = redis.Redis(
-    host='localhost',
-    port=6379,
-    db=0,
-    decode_responses=True,
-    protocol=2
-)
+if redis_url:
+    # 线上环境：从环境变量读取 Redis 地址
+    r = redis.Redis.from_url(redis_url, decode_responses=True)
+else:
+    # 本地开发：继续使用 localhost
+    r = redis.Redis(
+        host='localhost',
+        port=6379,
+        db=0,
+        decode_responses=True,
+        protocol=2
+    )
 
 
 # ==================== 5. 辅助函数 ====================
