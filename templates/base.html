@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}我的网站{% endblock %}</title>
+    <style>
+        /* ===== 全局重置 & 字体 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        /* ===== 卡片容器 ===== */
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 50px 60px;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            transition: transform 0.2s ease;
+            margin-top: 80px;
+        }
+        .container:hover {
+            transform: translateY(-2px);
+        }
+        /* ===== 标题 ===== */
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        h1 .emoji {
+            font-size: 36px;
+        }
+        /* ===== 分隔线 ===== */
+        hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, #e2e8f0, #a0aec0, #e2e8f0);
+            margin: 24px 0;
+        }
+        /* ===== 统计数字 ===== */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 20px 0 10px 0;
+        }
+        .stat-card {
+            background: #f7fafc;
+            border-radius: 16px;
+            padding: 20px 16px;
+            transition: background 0.2s ease;
+        }
+        .stat-card:hover {
+            background: #edf2f7;
+        }
+        .stat-card .number {
+            font-size: 40px;
+            font-weight: 800;
+            color: #2b6cb0;
+            display: block;
+            line-height: 1.2;
+        }
+        .stat-card .label {
+            font-size: 14px;
+            color: #718096;
+            margin-top: 4px;
+            display: block;
+        }
+        .stat-card.total .number {
+            color: #2d3748;
+        }
+        .stat-card.uv .number {
+            color: #38a169;
+        }
+        /* ===== 用户标识 ===== */
+        .user-badge {
+            background: #edf2f7;
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #4a5568;
+            word-break: break-all;
+            margin: 12px 0 8px 0;
+        }
+        .user-badge code {
+            background: #e2e8f0;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #2d3748;
+        }
+        /* ===== 链接 & 按钮 ===== */
+        .links {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .links a {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: #edf2f7;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .links a:hover {
+            background: #2b6cb0;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3);
+        }
+        /* ===== 页脚提示 ===== */
+        .hint {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #a0aec0;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+        }
+        /* ===== 响应式适配 ===== */
+        @media (max-width: 500px) {
+            .container { padding: 30px 20px; }
+            .stat-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 24px; }
+            .stat-card .number { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 导航栏 ===== -->
+    <div style="position: fixed; top: 0; left: 0; right: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); padding: 12px 30px; box-shadow: 0 2px 20px rgba(0,0,0,0.08); z-index: 1000; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="font-weight: 700; font-size: 18px; color: #2b6cb0;">
+            🚀 我的网站
+        </div>
+        <div style="display: flex; gap: 16px; align-items: center; font-size: 14px;">
+            <a href="/" style="color: #4a5568; text-decoration: none; font-weight: 500;">首页</a>
+            <a href="/count" style="color: #4a5568; text-decoration: none; font-weight: 500;">统计</a>
+            {% if session.username %}
+                <a href="/profile" style="color: #2b6cb0; text-decoration: none; font-weight: 600;">👤 个人中心</a>
+                <span style="color: #2b6cb0; font-weight: 600;">👋 {{ session.user_id }}</span>
+                <a href="/logout" style="color: #e53e3e; text-decoration: none; font-weight: 500;">登出</a>
+            {% else %}
+                <a href="/login" style="color: #2b6cb0; text-decoration: none; font-weight: 600;">🔐 登录</a>
+                <a href="/register" style="color: #38a169; text-decoration: none; font-weight: 600;">📝 注册</a>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 页面内容由子模板填充 -->
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

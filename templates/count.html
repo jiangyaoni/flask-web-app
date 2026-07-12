@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}访问统计{% endblock %}
+
+{% block content %}
+    <h1>
+        <span class="emoji">📊</span><br>
+        访问统计
+    </h1>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span class="number">{{ today_pv }}</span>
+            <span class="label">📅 今日 PV（浏览量）</span>
+        </div>
+        <div class="stat-card uv">
+            <span class="number">{{ today_uv }}</span>
+            <span class="label">👤 今日 UV（独立访客）</span>
+        </div>
+        <div class="stat-card total" style="grid-column: 1 / -1;">
+            <span class="number">{{ total_pv }}</span>
+            <span class="label">📈 历史总 PV（累计浏览量）</span>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="user-badge">
+        🔑 你的标识：<code>{{ current_user }}</code>
+    </div>
+
+    <p style="font-size: 14px; color: #718096;">
+        🔄 刷新此页面，PV +1；同一用户 UV 只算 1 次
+    </p>
+
+    <div class="links">
+        <a href="/">🏠 返回首页</a>
+        <a href="/count?user={{ 'test' if not request.args.get('user') else request.args.get('user') }}">
+            🔄 用当前用户刷新
+        </a>
+    </div>
+
+    <div class="hint">
+        💡 试试在 URL 后加 <code>?user=你的名字</code> 来模拟不同访客
+    </div>
+{% endblock %}
