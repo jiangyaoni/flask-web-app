@@ -14,7 +14,17 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # SQLite 连接字符串（文件数据库，无需安装 MySQL）
 # app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "app.db")}'
 # 如果你想用 MySQL，把上面这行注释掉，取消下面这行的注释，并修改账号密码/数据库名
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@localhost:3306/flask_db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:123456@localhost:3306/flask_db'
+
+# 部署实现
+database_url = os.environ.get('DATABASE_URL')
+if database_url and database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "app.db")}'
+
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
