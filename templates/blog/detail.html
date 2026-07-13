@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+    <div style="text-align: left;">
+        <h1 style="font-size: 28px; font-weight: 700; color: #1a202c; margin: 0 0 8px 0;">{{ post.title }}</h1>
+
+        <div style="font-size: 14px; color: #718096; display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px;">
+            <span>✍️ {{ post.author.nickname or post.author.username }}</span>
+            <span>📅 发布于 {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            {% if post.updated_at != post.created_at %}
+                <span>🔄 更新于 {{ post.updated_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            {% endif %}
+        </div>
+
+        <div style="background: #f7fafc; border-radius: 12px; padding: 12px 20px; margin: 12px 0 20px 0; display: flex; gap: 24px; font-size: 14px; color: #4a5568;">
+            <span>👁️ 阅读量：{{ pv }}</span>
+            <span>👥 访客数：{{ uv }}</span>
+        </div>
+
+        <div style="font-size: 16px; line-height: 1.9; color: #2d3748; padding: 16px 0;">
+            {{ post.content | safe }}
+        </div>
+
+        <!-- 作者操作按钮 -->
+        {% if session.username == post.author.username %}
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin: 24px 0 16px 0;">
+                <a href="{{ url_for('blog_edit', post_id=post.id) }}" style="color: white; text-decoration: none; padding: 8px 24px; border-radius: 30px; background: #2b6cb0; font-weight: 500;" onmouseover="this.style.background='#2c5282'" onmouseout="this.style.background='#2b6cb0'">
+                    ✏️ 编辑文章
+                </a>
+                <form action="{{ url_for('blog_delete', post_id=post.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('确定要删除这篇文章吗？此操作不可撤销。')">
+                    <button type="submit" style="padding: 8px 24px; border-radius: 30px; border: none; background: #e53e3e; color: white; font-weight: 500; cursor: pointer;" onmouseover="this.style.background='#c53030'" onmouseout="this.style.background='#e53e3e'">
+                        🗑️ 删除
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+
+        <a href="{{ url_for('blog_index') }}" style="color: #4a5568; text-decoration: none; display: inline-block; margin-top: 8px;">← 返回博客列表</a>
+    </div>
+{% endblock %}

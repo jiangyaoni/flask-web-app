@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, session
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import redis
@@ -42,6 +43,22 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+
+class Post(db.Model):
+    __tablename__ = 'posts'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+    # 外键关联到 users 表的 id
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    # 反向关系，通过 User 对象可以访问其所有文章
+    author = db.relationship('User', backref=db.backref('posts', lazy=True))
+
+    def __repr__(self):
+        return f'<Post {self.title}>'
 
 
 # ==================== 3. Session 与 Redis 配置 ====================
@@ -99,6 +116,14 @@ def seconds_until_tomorrow():
     now = datetime.datetime.now()
     tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
     return int((tomorrow - now).total_seconds())
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 # ==================== 5. 统计逻辑 ====================
@@ -193,6 +218,7 @@ def logout():
 
 # ==================== 10. 路由：个人中心 ====================
 @app.route('/profile')
+@login_required
 def profile():
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -213,6 +239,7 @@ def allowed_file(filename):
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
 def edit_profile():
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -264,6 +291,96 @@ def edit_profile():
 
     # GET 请求或出错时显示编辑页面
     return render_template('edit_profile.html', user=user, error=error)
+
+
+# ==================== 博客路由 ====================
+@app.route('/blog')
+def blog_index():
+    page = request.args.get('page', 1, type=int)
+    posts = Post.query.order_by(Post.created_at.desc()).paginate(page=page, per_page=10)
+    return render_template('blog/index.html', posts=posts)
+
+
+@app.route('/blog/<int:post_id>')
+def blog_detail(post_id):
+    post = Post.query.get_or_404(post_id)
+
+    # --- Redis 阅读计数 ---
+    # 文章 PV
+    r.incr(f'post:{post.id}:views')
+    # 文章 UV（使用之前的 get_user_id 函数）
+    visitor = get_user_id()
+    r.sadd(f'post:{post.id}:visitors', visitor)
+
+    pv = r.get(f'post:{post.id}:views') or 0
+    uv = r.scard(f'post:{post.id}:visitors') or 0
+
+    return render_template('blog/detail.html', post=post, pv=pv, uv=uv)
+
+
+@app.route('/blog/create', methods=['GET', 'POST'])
+@login_required
+def blog_create():
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        content = request.form.get('content', '').strip()
+        if not title or not content:
+            error = '标题和内容不能为空'
+            return render_template('blog/create.html', error=error)
+
+        # 获取当前用户对象
+        username = session['username']
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return redirect(url_for('logout'))
+
+        post = Post(title=title, content=content, author_id=user.id)
+        db.session.add(post)
+        db.session.commit()
+        return redirect(url_for('blog_detail', post_id=post.id))
+
+    return render_template('blog/create.html')
+
+
+@app.route('/blog/<int:post_id>/edit', methods=['GET', 'POST'])
+@login_required
+def blog_edit(post_id):
+    post = Post.query.get_or_404(post_id)
+
+    # 权限检查：仅作者本人可编辑
+    username = session['username']
+    user = User.query.filter_by(username=username).first()
+    if not user or post.author_id != user.id:
+        return redirect(url_for('blog_detail', post_id=post.id))
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        content = request.form.get('content', '').strip()
+        if not title or not content:
+            error = '标题和内容不能为空'
+            return render_template('blog/edit.html', post=post, error=error)
+        post.title = title
+        post.content = content
+        db.session.commit()
+        return redirect(url_for('blog_detail', post_id=post.id))
+
+    return render_template('blog/edit.html', post=post)
+
+
+@app.route('/blog/<int:post_id>/delete', methods=['POST'])
+@login_required
+def blog_delete(post_id):
+    post = Post.query.get_or_404(post_id)
+
+    # 权限检查
+    username = session['username']
+    user = User.query.filter_by(username=username).first()
+    if not user or post.author_id != user.id:
+        return redirect(url_for('blog_detail', post_id=post.id))
+
+    db.session.delete(post)
+    db.session.commit()
+    return redirect(url_for('blog_index'))
 
 
 # ==================== 12. 创建数据库表 ====================

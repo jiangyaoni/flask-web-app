@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}博客 - 文章列表{% endblock %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 style="font-size: 28px; font-weight: 700; color: #1a202c; margin: 0;">📝 博客文章</h1>
+        {% if session.username %}
+            <a href="{{ url_for('blog_create') }}" style="color: white; text-decoration: none; padding: 10px 24px; border-radius: 30px; background: #2b6cb0; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='#2c5282'" onmouseout="this.style.background='#2b6cb0'">
+                ＋ 写新文章
+            </a>
+        {% endif %}
+    </div>
+
+    {% for post in posts.items %}
+        <div style="background: #f7fafc; border-radius: 16px; padding: 20px 24px; margin-bottom: 20px; text-align: left; transition: box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+            <h2 style="font-size: 20px; margin: 0 0 6px 0;">
+                <a href="{{ url_for('blog_detail', post_id=post.id) }}" style="color: #2b6cb0; text-decoration: none;">{{ post.title }}</a>
+            </h2>
+            <div style="font-size: 13px; color: #718096; display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
+                <span>✍️ {{ post.author.nickname or post.author.username }}</span>
+                <span>📅 {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                {% if post.updated_at != post.created_at %}
+                    <span>🔄 {{ post.updated_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                {% endif %}
+            </div>
+            <p style="color: #4a5568; font-size: 14px; line-height: 1.6; margin: 0 0 10px 0;">
+                {{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}
+            </p>
+            <a href="{{ url_for('blog_detail', post_id=post.id) }}" style="color: #2b6cb0; text-decoration: none; font-weight: 500; font-size: 14px;">阅读全文 →</a>
+        </div>
+    {% else %}
+        <div style="text-align:center; padding: 40px 0; color: #a0aec0;">
+            <p style="font-size: 18px;">✨ 还没有文章，成为第一个发布的人吧！</p>
+        </div>
+    {% endfor %}
+
+    <!-- 分页 -->
+    {% if posts.has_prev or posts.has_next %}
+        <div style="display: flex; gap: 16px; justify-content: center; margin-top: 20px;">
+            {% if posts.has_prev %}
+                <a href="{{ url_for('blog_index', page=posts.prev_num) }}" style="color: #2b6cb0; text-decoration: none; padding: 8px 20px; border-radius: 20px; background: #edf2f7;">← 上一页</a>
+            {% endif %}
+            <span style="color: #718096; padding: 8px 12px;">第 {{ posts.page }} / {{ posts.pages }} 页</span>
+            {% if posts.has_next %}
+                <a href="{{ url_for('blog_index', page=posts.next_num) }}" style="color: #2b6cb0; text-decoration: none; padding: 8px 20px; border-radius: 20px; background: #edf2f7;">下一页 →</a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="hint">
+        💡 只有登录用户才能发布文章
+    </div>
+{% endblock %}
