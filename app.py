@@ -227,29 +227,6 @@ def profile():
     return render_template('profile.html', user=user)
 
 
-@app.route('/debug/db')
-def debug_db():
-    """诊断数据库连接状态（仅开发/调试用）"""
-    import os
-    info = {
-        'DATABASE_URL 是否存在': '是' if os.environ.get('DATABASE_URL') else '否',
-        '实际使用的数据库': app.config.get('SQLALCHEMY_DATABASE_URI', '未设置'),
-        '用户表是否存在': '是' if db.engine.has_table('users') else '否',
-        '用户数量': User.query.count() if db.engine.has_table('users') else 0,
-        '文章数量': Post.query.count() if db.engine.has_table('posts') else 0,
-    }
-    return f"""
-    <h1>🔍 数据库诊断</h1>
-    <ul>
-        <li>DATABASE_URL 是否存在：<strong>{info['DATABASE_URL 是否存在']}</strong></li>
-        <li>实际使用的数据库：<br><code>{info['实际使用的数据库']}</code></li>
-        <li>用户表是否存在：<strong>{info['用户表是否存在']}</strong></li>
-        <li>用户数量：<strong>{info['用户数量']}</strong></li>
-        <li>文章数量：<strong>{info['文章数量']}</strong></li>
-    </ul>
-    <p><a href="/">返回首页</a></p>
-    """
-
 
 # ==================== 11. 路由：编辑资料（修改昵称和头像） ====================
 # 文件上传配置
