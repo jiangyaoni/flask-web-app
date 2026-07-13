@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}编辑资料{% endblock %}
+
+{% block content %}
+    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px;">
+        <h1 style="font-size: 24px; font-weight: 700; color: #1a202c; margin: 0;">
+            ✏️ 编辑资料
+        </h1>
+    </div>
+
+    {% if error %}
+        <div style="background: #fed7d7; color: #c53030; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px;">
+            ❌ {{ error }}
+        </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" style="text-align: left; max-width: 400px; margin: 0 auto;">
+
+        <!-- 当前头像显示 -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 100px; height: 100px; border-radius: 50%; background: #2b6cb0; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; overflow: hidden;">
+                {% if user.avatar %}
+                    <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}"
+                         style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                    {{ (user.nickname if user.nickname else user.username)[0].upper() }}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 昵称输入 -->
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">昵称</label>
+            <input type="text" name="nickname" value="{{ user.nickname or '' }}"
+                   placeholder="请输入昵称（可为空）"
+                   style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; transition: border 0.2s;"
+                   onfocus="this.style.borderColor='#2b6cb0'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+
+        <!-- 头像上传 -->
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">更换头像</label>
+            <input type="file" name="avatar" accept="image/*"
+                   style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px;">
+            <div style="font-size: 12px; color: #a0aec0; margin-top: 4px;">支持 JPG、PNG、GIF，建议 200x200 像素</div>
+        </div>
+
+        <!-- 按钮 -->
+        <div style="display: flex; gap: 12px;">
+            <button type="submit"
+                    style="flex: 1; padding: 12px; background: #2b6cb0; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+                    onmouseover="this.style.background='#2c5282'" onmouseout="this.style.background='#2b6cb0'">
+                💾 保存资料
+            </button>
+            <a href="/profile"
+               style="flex: 1; padding: 12px; background: #edf2f7; color: #4a5568; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; text-align: center; text-decoration: none; transition: background 0.2s;"
+               onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#edf2f7'">
+                ↩️ 取消
+            </a>
+        </div>
+    </form>
+
+    <div style="margin-top: 20px; font-size: 13px; color: #a0aec0; text-align: center;">
+        💡 修改后点击保存，自动跳转到个人中心
+    </div>
+{% endblock %}
