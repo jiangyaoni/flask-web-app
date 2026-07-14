@@ -5,3 +5,4 @@ PyMySQL
 redis
 gunicorn
 psycopg2-binary
+Flask-Migrate
