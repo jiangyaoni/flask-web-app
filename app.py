@@ -461,6 +461,26 @@ def blog_search():
     return render_template('blog/index.html', posts=posts, title=f'搜索：{keyword}', keyword=keyword, categories=categories, tags=tags)
 
 
+@app.route('/run_migration')
+def run_migration():
+    """临时路由：执行数据库迁移"""
+    import subprocess
+    import sys
+    try:
+        # 尝试使用 subprocess 调用 flask db upgrade
+        result = subprocess.run(
+            [sys.executable, '-m', 'flask', 'db', 'upgrade'],
+            capture_output=True,
+            text=True,
+            cwd=os.path.dirname(os.path.abspath(__file__))
+        )
+        if result.returncode == 0:
+            return f"✅ 迁移执行成功！<br>输出：{result.stdout}<br><a href='/blog'>去博客看看</a>"
+        else:
+            return f"❌ 迁移执行失败：<br>错误信息：{result.stderr}"
+    except Exception as e:
+        return f"❌ 迁移执行异常：{e}"
+
 # ==================== 16. 初始化示例数据（仅首次使用） ====================
 @app.route('/blog/init_data')
 @login_required
