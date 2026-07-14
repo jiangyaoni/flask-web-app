@@ -470,13 +470,19 @@ def blog_search():
 def fix_db():
     """直接修复数据库：添加缺失的 category_id 列"""
     try:
-        from sqlalchemy import inspect
+        from sqlalchemy import inspect, text
+
         inspector = inspect(db.engine)
         columns = [col['name'] for col in inspector.get_columns('posts')]
 
         if 'category_id' not in columns:
-            # 添加 category_id 列
-            db.engine.execute('ALTER TABLE posts ADD COLUMN category_id INTEGER REFERENCES categories(id)')
+            # 使用 db.engine.connect() 执行原生 SQL
+            with db.engine.connect() as conn:
+                # 先添加列（不设外键约束，防止数据不一致）
+                conn.execute(text('ALTER TABLE posts ADD COLUMN category_id INTEGER'))
+                # 再添加外键约束
+                conn.execute(text('ALTER TABLE posts ADD CONSTRAINT fk_posts_category_id FOREIGN KEY (category_id) REFERENCES categories(id)'))
+                conn.commit()
             return "✅ category_id 列已成功添加！<a href='/blog'>去博客看看</a>"
         else:
             return "✅ category_id 列已存在，无需修复。<a href='/blog'>去博客看看</a>"
