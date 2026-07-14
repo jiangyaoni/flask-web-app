@@ -30,6 +30,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+
 # ==================== 2. 用户模型 ====================
 class User(db.Model):
     __tablename__ = 'users'
@@ -96,7 +97,6 @@ post_tags = db.Table(
     db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True)
 )
 
-
 # ==================== 3. Session 与 Redis 配置 ====================
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
@@ -156,6 +156,7 @@ def login_required(f):
         if 'username' not in session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -220,6 +221,7 @@ def register():
                 db.session.rollback()
                 error = '账号已存在，请换一个'
     return render_template('register.html', error=error)
+
 
 # ==================== 8. 路由：登录 ====================
 @app.route('/login', methods=['GET', 'POST'])
@@ -396,7 +398,8 @@ def blog_edit(post_id):
         return redirect(url_for('blog_detail', post_id=post.id))
 
     selected_tag_ids = [tag.id for tag in post.tags]
-    return render_template('blog/edit.html', post=post, categories=categories, tags=tags, selected_tag_ids=selected_tag_ids)
+    return render_template('blog/edit.html', post=post, categories=categories, tags=tags,
+                           selected_tag_ids=selected_tag_ids)
 
 
 @app.route('/blog/<int:post_id>/delete', methods=['POST'])
@@ -418,12 +421,13 @@ def blog_delete(post_id):
 def blog_category(slug):
     category = Category.query.filter_by(slug=slug).first_or_404()
     page = request.args.get('page', 1, type=int)
-    posts = Post.query.filter_by(category_id=category.id)\
-        .order_by(Post.created_at.desc())\
+    posts = Post.query.filter_by(category_id=category.id) \
+        .order_by(Post.created_at.desc()) \
         .paginate(page=page, per_page=10)
     categories = Category.query.all()
     tags = Tag.query.all()
-    return render_template('blog/index.html', posts=posts, title=f'分类：{category.name}', categories=categories, tags=tags)
+    return render_template('blog/index.html', posts=posts, title=f'分类：{category.name}', categories=categories,
+                           tags=tags)
 
 
 # ==================== 14. 路由：标签筛选 ====================
@@ -432,8 +436,8 @@ def blog_tag(slug):
     tag = Tag.query.filter_by(slug=slug).first_or_404()
     page = request.args.get('page', 1, type=int)
     # 通过关联查询：筛选出包含该标签的文章
-    posts = Post.query.join(Post.tags).filter(Tag.id == tag.id)\
-        .order_by(Post.created_at.desc())\
+    posts = Post.query.join(Post.tags).filter(Tag.id == tag.id) \
+        .order_by(Post.created_at.desc()) \
         .paginate(page=page, per_page=10)
     categories = Category.query.all()
     tags = Tag.query.all()
@@ -458,28 +462,26 @@ def blog_search():
 
     categories = Category.query.all()
     tags = Tag.query.all()
-    return render_template('blog/index.html', posts=posts, title=f'搜索：{keyword}', keyword=keyword, categories=categories, tags=tags)
+    return render_template('blog/index.html', posts=posts, title=f'搜索：{keyword}', keyword=keyword,
+                           categories=categories, tags=tags)
 
 
-@app.route('/run_migration')
-def run_migration():
-    """临时路由：执行数据库迁移"""
-    import subprocess
-    import sys
+@app.route('/fix_db')
+def fix_db():
+    """直接修复数据库：添加缺失的 category_id 列"""
     try:
-        # 尝试使用 subprocess 调用 flask db upgrade
-        result = subprocess.run(
-            [sys.executable, '-m', 'flask', 'db', 'upgrade'],
-            capture_output=True,
-            text=True,
-            cwd=os.path.dirname(os.path.abspath(__file__))
-        )
-        if result.returncode == 0:
-            return f"✅ 迁移执行成功！<br>输出：{result.stdout}<br><a href='/blog'>去博客看看</a>"
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        columns = [col['name'] for col in inspector.get_columns('posts')]
+
+        if 'category_id' not in columns:
+            # 添加 category_id 列
+            db.engine.execute('ALTER TABLE posts ADD COLUMN category_id INTEGER REFERENCES categories(id)')
+            return "✅ category_id 列已成功添加！<a href='/blog'>去博客看看</a>"
         else:
-            return f"❌ 迁移执行失败：<br>错误信息：{result.stderr}"
+            return "✅ category_id 列已存在，无需修复。<a href='/blog'>去博客看看</a>"
     except Exception as e:
-        return f"❌ 迁移执行异常：{e}"
+        return f"❌ 修复失败：{e}"
 
 # ==================== 16. 初始化示例数据（仅首次使用） ====================
 @app.route('/blog/init_data')
