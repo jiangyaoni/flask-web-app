@@ -20,6 +20,28 @@
                        onfocus="this.style.borderColor='#2b6cb0'" onblur="this.style.borderColor='#e2e8f0'">
             </div>
 
+            <!-- 分类选择 -->
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">分类</label>
+                <select name="category_id" style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; background: white;">
+                    <option value="">未分类</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if post.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- 标签选择 -->
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">标签（可多选）</label>
+                <select name="tag_ids" multiple style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; outline: none; background: white; min-height: 80px;">
+                    {% for tag in tags %}
+                        <option value="{{ tag.id }}" {% if tag.id in selected_tag_ids %}selected{% endif %}>{{ tag.name }}</option>
+                    {% endfor %}
+                </select>
+                <div style="font-size: 12px; color: #a0aec0; margin-top: 4px;">按住 Ctrl 键点击可多选</div>
+            </div>
+
             <div style="margin-bottom: 20px;">
                 <label style="display: block; font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 4px;">内容</label>
                 <textarea name="content" required
